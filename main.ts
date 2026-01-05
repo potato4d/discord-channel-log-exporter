@@ -1,7 +1,7 @@
 // main.ts (Bun)
 // bun run main.ts --channel=123456789 --start=2026-01-01T00:00:00+09:00 --end=2026-01-03T00:00:00+09:00 --out=./lake
 
-import { mkdir, appendFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { createHash } from "node:crypto";
 import { parseArgs } from "node:util";
@@ -36,7 +36,12 @@ interface Config {
 const env = (k: string) => process.env[k] ?? (() => { throw new Error(`Missing env: ${k}`); })();
 const hash = (s: string) => createHash("sha256").update(s).digest("hex");
 const hashId = (id: string, salt?: string) => salt ? hash(`${salt}:${id}`) : id;
-const utcDate = (d: Date) => d.toISOString().slice(0, 10);
+const localDate = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
 
 const isThread = (ch: { type: ChannelType }) =>
   [ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.AnnouncementThread].includes(ch.type);
@@ -105,22 +110,29 @@ function toRecord(msg: Message, cfg: Config) {
 // File I/O
 // ─────────────────────────────────────────────────────────────
 
-async function appendNdjson(path: string, records: unknown[]) {
+async function writeJson(path: string, records: unknown[]) {
   if (!records.length) return;
   await mkdir(dirname(path), { recursive: true });
-  await appendFile(path, records.map((r) => JSON.stringify(r)).join("\n") + "\n");
+
+  // 既存ファイルがあればマージ
+  let existing: unknown[] = [];
+  try {
+    existing = JSON.parse(await Bun.file(path).text());
+  } catch {}
+
+  await Bun.write(path, JSON.stringify([...existing, ...records], null, 2));
 }
 
 async function writeMessages(cfg: Config, msgs: Message[]) {
   if (!msgs.length) return;
   msgs.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
-  const byDate = Map.groupBy(msgs, (m) => utcDate(new Date(m.createdTimestamp)));
+  const byDate = Map.groupBy(msgs, (m) => localDate(new Date(m.createdTimestamp)));
 
   for (const [dt, batch] of byDate) {
     const [first] = batch;
-    const path = join(cfg.outDir, `dt=${dt}`, `guild_id=${first.guildId ?? "dm"}`, `channel_id=${first.channelId}`, "messages.ndjson");
-    await appendNdjson(path, batch.map((m) => toRecord(m, cfg)));
+    const path = join(cfg.outDir, `dt=${dt}`, `guild_id=${first.guildId ?? "dm"}`, `channel_id=${first.channelId}`, "messages.json");
+    await writeJson(path, batch.map((m) => toRecord(m, cfg)));
   }
 }
 
