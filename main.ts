@@ -183,8 +183,8 @@ function parseConfig(): Config {
   if (!values.channel) throw new Error("--channel required");
   if (!values.start || !values.end) throw new Error("--start and --end required");
 
-  const token = values.token ?? process.env.DISCORD_BOT_TOKEN ?? process.env.DISCORD_TOKEN;
-  if (!token) throw new Error("--token required or DISCORD_BOT_TOKEN/DISCORD_TOKEN env var must be set");
+  const token = values.token ?? process.env.DISCORD_TOKEN;
+  if (!token) throw new Error("--token required or DISCORD_TOKEN env var must be set");
 
   return {
     token,

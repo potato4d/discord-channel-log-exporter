@@ -34,8 +34,6 @@ Create a `.env` file in the project root:
 
 ```env
 # Required: Discord bot token
-DISCORD_BOT_TOKEN=your_bot_token_here
-# or
 DISCORD_TOKEN=your_bot_token_here
 ```
 
