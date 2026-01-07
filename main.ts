@@ -3,7 +3,6 @@
 
 import { mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
-import { createHash } from "node:crypto";
 import { parseArgs } from "node:util";
 import {
   ChannelType,
@@ -25,7 +24,6 @@ interface Config {
   outDir: string;
   start: Date;
   end: Date;
-  hashSalt?: string;
   redactContent: boolean;
 }
 
@@ -34,8 +32,6 @@ interface Config {
 // ─────────────────────────────────────────────────────────────
 
 const env = (k: string) => process.env[k] ?? (() => { throw new Error(`Missing env: ${k}`); })();
-const hash = (s: string) => createHash("sha256").update(s).digest("hex");
-const hashId = (id: string, salt?: string) => salt ? hash(`${salt}:${id}`) : id;
 const localDate = (d: Date) => {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -67,7 +63,7 @@ function toRecord(msg: Message, cfg: Config) {
     created_at: new Date(msg.createdTimestamp).toISOString(),
     edited_at: msg.editedTimestamp ? new Date(msg.editedTimestamp).toISOString() : null,
     author: author && {
-      id: hashId(author.id, cfg.hashSalt),
+      id: author.id,
       username: author.username,
       discriminator: author.discriminator,
       globalName: author.globalName ?? null,
@@ -85,7 +81,7 @@ function toRecord(msg: Message, cfg: Config) {
     },
     mentions: {
       users: mentions.users.map((u) => ({
-        id: hashId(u.id, cfg.hashSalt),
+        id: u.id,
         username: u.username,
         globalName: u.globalName ?? null,
         bot: u.bot,
@@ -193,7 +189,6 @@ function parseConfig(): Config {
     outDir: values.out!,
     start: parseDate(values.start),
     end: parseDate(values.end),
-    hashSalt: process.env.HASH_SALT,
     redactContent: values.redactContent ?? false,
   };
 }
