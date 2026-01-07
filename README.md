@@ -1,6 +1,6 @@
-# Discord Message Exporter
+# Discord Channel Log Exporter
 
-A lightweight Discord message exporter built with Bun and discord.js. Export messages from Discord channels within a specific date range, with support for privacy features like content redaction.
+A lightweight Discord channel log exporter built with Bun and discord.js. Export messages from Discord channels within a specific date range, with support for privacy features like content redaction.
 
 ## Features
 
