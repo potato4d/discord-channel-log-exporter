@@ -64,6 +64,7 @@ bun run main.ts \
 
 | Argument | Required | Default | Description |
 |----------|----------|---------|-------------|
+| `--token` | No | - | Discord bot token (uses env vars if not provided) |
 | `--channel` | Yes | - | Discord channel ID to export |
 | `--start` | Yes | - | Start date/time (ISO 8601 format) |
 | `--end` | Yes | - | End date/time (ISO 8601 format) |
@@ -75,6 +76,15 @@ bun run main.ts \
 **Export messages from a specific date range:**
 ```bash
 bun run main.ts \
+  --channel=123456789012345678 \
+  --start=2026-01-01T00:00:00Z \
+  --end=2026-01-31T23:59:59Z
+```
+
+**Export with token as command-line argument:**
+```bash
+bun run main.ts \
+  --token=your_bot_token_here \
   --channel=123456789012345678 \
   --start=2026-01-01T00:00:00Z \
   --end=2026-01-31T23:59:59Z
